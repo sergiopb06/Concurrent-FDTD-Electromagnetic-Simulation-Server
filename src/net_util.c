@@ -1,6 +1,3 @@
-//
-// Created by Sleyter Angulo on 9/14/26.
-//
 
 #include "../includes/net_util.h"
 #include <sys/socket.h>
@@ -24,6 +21,7 @@ int nu_listen(unsigned short port, int backlog)
     if (setsockopt(file_descriptor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
     {
         perror("setsockopt");
+        close(file_descriptor);
         return -1;
     }
 
@@ -56,7 +54,7 @@ int nu_write_all(int file_descriptor, const void* buffer, size_t size)
     size_t sent = 0;
 
     while (sent < size) {
-        ssize_t n = write(file_descriptor, p + sent, size - sent);
+        ssize_t n = send(file_descriptor, p + sent, size - sent, MSG_NOSIGNAL); //use send so server wont shutdown with SIGPIPE
         if (n < 0) {
             if (errno == EINTR)
                 continue;          /* interrupted by a signal: retry */
@@ -68,47 +66,87 @@ int nu_write_all(int file_descriptor, const void* buffer, size_t size)
     return 0;
 }
 
-ssize_t nu_drain_request(int file_descriptor)
+ssize_t nu_read_line(int file_descriptor, char *buffer, size_t size)
 {
-    char buffer[2048];
-    ssize_t n;
+    if (buffer == NULL || size < 2){ 
+        errno = EINVAL; 
+        return -1; 
+    }
 
-    do {
-        n = read(file_descriptor, buffer, sizeof buffer);
-    } while (n < 0 && errno == EINTR);
+    size_t len = 0;
+    int found_newline = 0;
 
-    if (n < 0)
-        perror("read");
+    while(len < size - 1){
+        char c;
+        ssize_t n = read(file_descriptor, &c, 1);
 
-    return n;
+        if(n < 0){
+            if(errno == EINTR)
+                continue;
+            
+            return -1;
+        }
+
+        if(n == 0){
+            if(len == 0) 
+                return -1;
+
+            break;
+        }
+
+        if(c == '\n'){
+            found_newline = 1;
+            break;
+        }
+        
+        buffer[len++] = c;
+    }
+
+    if(!found_newline && len == size -1){
+        errno = EMSGSIZE;
+        return -1;
+    }
+
+    if(len > 0 && buffer[len - 1] == '\r')
+        len--;
+    
+    buffer[len] = '\0';
+    return(ssize_t)len;
 }
 
-int nu_send_response(int file_descriptor, unsigned long connection_id)
+int nu_send_line(int file_descriptor, const char *line)
 {
-    char body[128];
-    char header[256];
+    if(nu_write_all(file_descriptor, line, strlen(line)) < 0 )
+        return -1;
+    return nu_write_all(file_descriptor, "\n", 1);
+}
 
-    int body_len = snprintf(body, sizeof body,
-                            "connection %lu handled\n", connection_id);
-    if (body_len < 0 || (size_t)body_len >= sizeof body) {
-        fprintf(stderr, "nu_send_response: body truncated\n");
+int nu_connect(const char  *host, unsigned short port)
+{
+    int file_descriptor = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(file_descriptor < 0){
+        perror("socket");
         return -1;
     }
 
-    int header_len = snprintf(header, sizeof header,
-                              "HTTP/1.1 200 OK\r\n"
-                              "Content-Type: text/plain\r\n"
-                              "Content-Length: %d\r\n"
-                              "Connection: close\r\n"
-                              "\r\n",
-                              body_len);
-    if (header_len < 0 || (size_t)header_len >= sizeof header) {
-        fprintf(stderr, "nu_send_response: header truncated\n");
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+
+    if(inet_pton(AF_INET, host, &addr.sin_addr) != 1){
+        fprintf(stderr, "invalid host '%s'\n", host);
+        close(file_descriptor);
         return -1;
     }
 
-    if (nu_write_all(file_descriptor, header, (size_t)header_len) < 0)
+    if(connect(file_descriptor, (struct sockaddr *)&addr, sizeof addr) < 0){
+        perror("connect");
+        close(file_descriptor);
         return -1;
+    }
 
-    return nu_write_all(file_descriptor, body, (size_t)body_len);
+    return file_descriptor;
+
 }

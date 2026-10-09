@@ -1,143 +1,84 @@
-//
-// Created by Sleyter Angulo on 9/17/26.
-//
 
-#define _POSIX_C_SOURCE 200809L
-
-#include <arpa/inet.h>
+#include "../includes/net_util.h"
 #include <errno.h>
-#include <netinet/in.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <unistd.h>
-#include <time.h>
+
+#define LINE_MAX_LEN 512
 
 
-
-typedef struct {
-    struct sockaddr_in server;
-    unsigned long requests;
-    unsigned long completed;   /* written only by this thread */
-} worker_args_t;
+//./fdtd_client <host> <port> <command...>
 
 
-
-static int send_one_request(const struct sockaddr_in *server)
+int main(int argc, char **argv) 
 {
-    int file_descriptor = socket(AF_INET, SOCK_STREAM, 0);
-    if (file_descriptor < 0)
-        return -1;
+    /*argv[0] = program name
+      argv[1] = host
+      argv[2] = port
+      argv[3...] = command
+    */
 
-    if (connect(file_descriptor, (const struct sockaddr *)server, sizeof *server) < 0) {
-        close(file_descriptor);
-        return -1;
-    }
-
-    static const char request[] = "GET / HTTP/1.1\r\nHost: bench\r\n\r\n";
-    if (write(file_descriptor, request, sizeof request - 1) < 0) {
-        close(file_descriptor);
-        return -1;
-    }
-
-    char buffer[1024];
-    while (read(file_descriptor, buffer, sizeof buffer) > 0)
-        ;   /* read until the server closes */
-
-    close(file_descriptor);
-    return 0;
-}
-
-static void *worker(void *arg)
-{
-    worker_args_t *args = arg;
-
-    for (unsigned long i = 0; i < args->requests; ++i) {
-        if (send_one_request(&args->server) == 0)
-            ++args->completed;
-    }
-    return NULL;
-}
-
-
-
-int main(int argc, char **argv)
-{
-
-    struct timespec start; 
-    struct timespec end;
-
-    if (argc != 5) {
-        fprintf(stderr,
-                "usage: %s <host> <port> <threads> <requests-per-thread>\n",
-                argv[0]);
+    if (argc < 4){
+        fprintf(stderr, "usage: %s <host> <port> <command...>\n", argv[0]);
         return EXIT_FAILURE;
     }
 
-    struct sockaddr_in server;
-    memset(&server, 0, sizeof server);
-    server.sin_family = AF_INET;
-    server.sin_port = htons((unsigned short)atoi(argv[2]));
+    
+    char *tail = NULL;
+    errno = 0;
+    long port = strtol(argv[2], &tail, 10);
 
-    if (inet_pton(AF_INET, argv[1], &server.sin_addr) != 1) {
-        fprintf(stderr, "invalid host '%s'\n", argv[1]);
+       //verification for invalid ports
+    if (errno != 0 || tail == argv[2] || *tail != '\0' || port <= 0 || port > 65535){
+        fprintf(stderr, "invalid port '%s'\n", argv[2]);
         return EXIT_FAILURE;
     }
 
-    long thread_count = atol(argv[3]);
-    long per_thread = atol(argv[4]);
-    if (thread_count <= 0 || per_thread <= 0) {
-        fprintf(stderr, "threads and requests must be positive\n");
-        return EXIT_FAILURE;
-    }
 
-    pthread_t *tids = calloc((size_t)thread_count, sizeof *tids);
-    worker_args_t *args = calloc((size_t)thread_count, sizeof *args);
+    char request[LINE_MAX_LEN];
+    size_t used = 0;
+    request[0] = '\0';
 
-    if (tids == NULL || args == NULL) {
-        fprintf(stderr, "out of memory\n");
-        free(tids);
-        free(args);
-        return EXIT_FAILURE;
-    }
 
-    long started = 0;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    for (long i = 0; i < thread_count; ++i) {
-        args[i].server = server;
-        args[i].requests = (unsigned long)per_thread;
-        args[i].completed = 0;
+    for (int i = 3; i < argc; ++i){
 
-        int pthreath_created = pthread_create(&tids[i], NULL, worker, &args[i]);
-        if (pthreath_created != 0) {
-            fprintf(stderr, "pthread_create: %s\n", strerror(pthreath_created));
-            break;
+        //use snprintf to send request text to socket.
+                         //writes in       //available storage          //if(i>3)->blank space
+        int w = snprintf(request + used, sizeof request - used, "%s%s", (i > 3) ? " " : "", argv[i]);
+
+
+        if (w < 0 || (size_t)w >= sizeof request - used){
+            fprintf(stderr, "command too long\n");
+            return EXIT_FAILURE;
         }
-        ++started;
+
+
+        used += (size_t)w;
     }
 
-    unsigned long total = 0;
-    for (long i = 0; i < started; ++i) {
-        int rc = pthread_join(tids[i], NULL);
-        if (rc != 0)
-            fprintf(stderr, "pthread_join: %s\n", strerror(rc));
-        else
-            total += args[i].completed;
-    }
-    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    double elapsed = end.tv_sec - start.tv_sec; 
-    double nanoSec = end.tv_nsec - start.tv_nsec; 
-    nanoSec = nanoSec / 1e9;
-    elapsed = elapsed + nanoSec; 
+    int file_descriptor = nu_connect(argv[1], (unsigned short)port);
+
+    if (file_descriptor < 0)
+        return EXIT_FAILURE;
+
+    if (nu_send_line(file_descriptor, request) < 0){
+        close(file_descriptor);
+        return EXIT_FAILURE;
+    }
     
 
-    printf("requests completed: %lu\n", total);
-    printf("time elapsed: %.3f\n",  elapsed);
+    char response[LINE_MAX_LEN];
+    ssize_t n = nu_read_line(file_descriptor, response, sizeof response);
+    close(file_descriptor);
 
-    free(tids);
-    free(args);
+    if (n < 0){
+        fprintf(stderr, "no response from server\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("%s\n", response);
     return EXIT_SUCCESS;
 }
