@@ -1,6 +1,6 @@
 #include<pthread.h>
-#include "fdtd.h"
-#include "solver.h"
+#include "../includes/fdtd.h"
+#include "../includes/solver.h"
 
 //#include "barrier.h"
 
