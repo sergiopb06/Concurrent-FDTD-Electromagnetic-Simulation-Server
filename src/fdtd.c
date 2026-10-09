@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "fdtd.h"
+#include "includes/fdtd.h"
 #include <math.h>
 
 
