@@ -6,8 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define LINE_MAX_LEN 512
-
 
 //./fdtd_client <host> <port> <command...>
 

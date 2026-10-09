@@ -2,8 +2,11 @@
 #ifndef NET_UTIL_H
 #define NET_UTIL_H
 
+
 #include <stddef.h>
 #include <sys/types.h>
+
+#define LINE_MAX_LEN 512
 
 int nu_listen(unsigned short port, int backlog);
 
