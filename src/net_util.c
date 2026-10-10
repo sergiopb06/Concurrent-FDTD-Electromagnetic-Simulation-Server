@@ -1,6 +1,4 @@
-//
-// Created by Sleyter Angulo on 9/14/26.
-//
+
 
 #include "../includes/net_util.h"
 #include <sys/socket.h>

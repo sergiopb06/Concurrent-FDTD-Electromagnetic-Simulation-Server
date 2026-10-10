@@ -1,6 +1,4 @@
-//
-// Created by Sleyter Angulo on 9/17/26.
-//
+
 
 #define _POSIX_C_SOURCE 200809L
 
