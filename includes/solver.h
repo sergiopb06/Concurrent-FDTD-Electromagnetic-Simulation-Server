@@ -4,5 +4,6 @@
 
 int fdtd_run(fdtdGrid *grid, int total_steps, int thread_count, int source_row, int source_column);
 
+static void *solver_thread(void *arg);
 
 #endif 
