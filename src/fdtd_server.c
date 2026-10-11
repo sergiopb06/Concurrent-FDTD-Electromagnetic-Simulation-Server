@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include "../includes/net_util.h"
+#include "../includes/protocol.h" 
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
@@ -75,9 +76,24 @@ static void *handle_connection(void *arg)
     char line[LINE_MAX_LEN];
 
     ssize_t n = nu_read_line(conn->file_descriptor, line, sizeof line);
-    if (n > 0)
-        //This is when the command is accepted, it should answer back. IMPLEMENT THIS IN THE FUTURE
-        (void)nu_send_line(conn->file_descriptor, "ERROR not implemented");
+
+    if (n > 0){
+       command_t command;
+
+        if (protocol_parse(line, &command) < 0) {
+            char reply[LINE_MAX_LEN];
+            snprintf(reply, sizeof reply, "ERROR %s", command.error);
+
+            (void)nu_send_line(conn->file_descriptor, reply);
+
+        } 
+        
+        else { 
+            //protocol_parse does its job: NEED TO IMPLEMENT handle_command to reply accordingly to each parse 
+            (void)nu_send_line(conn->file_descriptor, "ERROR not implemented");
+        }
+
+    }
 
     else if (n == 0)
         (void)nu_send_line(conn->file_descriptor, "ERROR empty line");
