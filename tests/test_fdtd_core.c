@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
+#include <math.h>
+
+#define REF_N 8     /*Variables used for reference test*/
+#define REF_STEPS 5 
+#define REF_SOURCE 4 
 
 static int fails = 0;
-
 /* 
 The following block of code was partially made using: 
 Anthropic (2026). Claude(Opus 5.5) https://claude.ai
@@ -85,10 +89,85 @@ static void test_symmetry(void){
     fdtd_grid_free(&grid);
 }
 
+static void reference_8x8(double ez[REF_N][REF_N]){
+
+    const double sc = 1.0 / sqrt(2.0);
+    const double eta0 = 376.730313668;
+    const double eps_r = 1.0;
+    const double ppw = 20.0;
+    const double pi = 3.14159265358979323846;
+    double hx[REF_N][REF_N - 1] = {{0.0}};
+    double hy[REF_N - 1][REF_N] = {{0.0}};
+
+    for(int m = 0; m < REF_N; m++){
+        for(int n = 0; n < REF_N; n++){
+            ez[m][n] = 0.0;
+        }
+    }
+
+    /*Magnetic field */
+    for(int q = 0; q < REF_STEPS; q++){
+
+        for(int m = 0; m < REF_N; m++){
+            for(int n = 0; n < REF_N; n++){
+                hx[m][n] = hx[m][n] - (sc/eta0) * (ez[m][n+1] - ez[m][n]);
+            }
+        }
+
+        for(int m = 0; m < REF_N - 1; m++){
+            for(int n = 0; n < REF_N; n++){
+                hy[m][n] = hy[m][n] + (sc/eta0) * (ez[m+1][n] - ez[m][n]);
+            }
+        }
+
+        /*Electric field*/
+        for(int m = 1; m < REF_N - 1; m++){
+            for(int n = 1; n < REF_N - 1; n++){
+                ez[m][n] = ez[m][n] + (sc * eta0 / eps_r) * ((hy[m][n] - hy[m-1][n]) - (hx[m][n] - hx[m][n-1]));
+            }
+        }
+
+        /*Ricker source*/
+        double arg = pi * ((sc*q) / ppw - 1.0);
+        arg = arg * arg; 
+        ez[REF_SOURCE][REF_SOURCE] += (1.0 - 2.0 * arg) * exp(-arg);
+    }
+
+}
+
+static void test_reference_8x8(void){
+    double expected[REF_N][REF_N];
+    fdtdGrid grid;
+    int bad_cells = 0;
+    double max_difference = 0.0;
+
+    reference_8x8(expected); 
+
+    fdtd_grid_init(&grid, REF_N, REF_N);
+    fdtd_run(&grid, REF_STEPS, 1, REF_SOURCE, REF_SOURCE);
+
+    for(int m = 0; m < REF_N; m++){
+        for(int n = 0; n <REF_N;n++ ){
+            double difference = fabs(grid.Ez[m * grid.ny + n] - expected[m][n]);
+            if(difference  > max_difference){
+                max_difference = difference;
+            }
+            if(difference > 1e-12){
+                bad_cells++;
+            }
+        }
+    }
+
+    printf(" max difference: %.3e\n", max_difference);
+    CHECK(bad_cells == 0, "Reference 8x8 with 5 steps: matches independent implementation");
+    fdtd_grid_free(&grid);
+
+}
 
 int main(){
     test_borders_zero();
     test_symmetry();
+    test_reference_8x8();
     if(fails == 0){
         printf("\nAll tests passed.");
         return 0;
