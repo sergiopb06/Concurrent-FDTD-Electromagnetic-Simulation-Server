@@ -1,13 +1,18 @@
 #include <stdio.h>
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
+#include <string.h>
+
 #include <math.h>
 
 #define REF_N 8     /*Variables used for reference test*/
 #define REF_STEPS 5 
 #define REF_SOURCE 4 
 
+#define DETERMINISM_REPEATS 5
+
 static int fails = 0;
+
 /* 
 The following block of code was partially made using: 
 Anthropic (2026). Claude(Opus 5.5) https://claude.ai
@@ -82,10 +87,10 @@ static void test_symmetry(void){
         }
     }
 
-    CHECK(bad_axis_m == 0, "Symmery of orizontal axis");
+    CHECK(bad_axis_m == 0, "Symmetry of the horizontal axis");
     CHECK(bad_axis_n == 0, "Symmetry of vertical axis");
     CHECK(bad_diagonal == 0, "Symmetry of the main diagonal");
-    CHECK(bad_anti_diagonal == 0, "Symmetry of thee anti-diagonal");
+    CHECK(bad_anti_diagonal == 0, "Symmetry of the anti-diagonal");
     fdtd_grid_free(&grid);
 }
 
@@ -105,11 +110,12 @@ static void reference_8x8(double ez[REF_N][REF_N]){
         }
     }
 
-    /*Magnetic field */
-    for(int q = 0; q < REF_STEPS; q++){
 
+    for(int q = 0; q < REF_STEPS; q++){
+        
+        /*Magnetic field */
         for(int m = 0; m < REF_N; m++){
-            for(int n = 0; n < REF_N; n++){
+            for(int n = 0; n < REF_N - 1; n++){
                 hx[m][n] = hx[m][n] - (sc/eta0) * (ez[m][n+1] - ez[m][n]);
             }
         }
@@ -164,14 +170,89 @@ static void test_reference_8x8(void){
 
 }
 
+static int run_simulation(fdtdGrid *grid, int nx, int ny, int steps, int threads, int sx, int sy){
+    if(fdtd_grid_init(grid, nx, ny) != 0){
+        return -1; 
+    }
+    return fdtd_run(grid,steps,threads,sx,sy);
+}
+
+static int matches_reference(const fdtdGrid *reference, int threads, int steps, int sx, int sy){
+    int mismatches = 0;
+
+    for(int repeat = 0; repeat < DETERMINISM_REPEATS; repeat++){
+        fdtdGrid grid; 
+        run_simulation(&grid, reference->nx, reference->ny, steps, threads, sx, sy);
+
+        size_t bytes = sizeof(double) * (size_t)reference->nx * (size_t)reference->ny;
+        if(memcmp(grid.Ez, reference->Ez, bytes) != 0){
+            mismatches++;
+        }
+
+        fdtd_grid_free(&grid);
+
+    }
+    return mismatches == 0;
+}
+
+
+static void test_determinism(void){
+    const int thread_counts[] = {1,2,3,4,8};
+    const int cases = sizeof(thread_counts) / sizeof(thread_counts[0]);
+    fdtdGrid reference; 
+    char message[96];
+
+    run_simulation(&reference, 101, 101, 200, 1, 50, 50);
+
+    for(int c = 0; c < cases; c++){
+        int threads = thread_counts[c];
+        snprintf(message, sizeof(message), "Determinism: T=%d is identical to T=1 (memcmp)", threads);
+        CHECK(matches_reference(&reference, threads, 200, 50, 50), message);
+    }
+
+    fdtd_grid_free(&reference);
+}
+
+
+static void test_uneven_rows(void){
+    const int thread_counts[] = {3,5,7,8,35};
+    const int cases = sizeof(thread_counts) / sizeof(thread_counts[0]);
+    fdtdGrid reference; 
+    char message[96];
+
+    run_simulation(&reference, 37, 29, 120, 1, 18, 14);
+
+    for(int c = 0; c < cases; c++){
+        int threads = thread_counts[c];
+        snprintf(message, sizeof(message), "Uneven rows T=%d", threads);
+        CHECK(matches_reference(&reference, threads, 120, 18, 14), message);
+    }
+    fdtd_grid_free(&reference);
+}
+
+static void test_invalid_threads(void){
+    fdtdGrid grid;
+
+    fdtd_grid_init(&grid, 16, 16);
+    CHECK(fdtd_run(&grid, 10, 0, 8, 8 ) == -1, "Invalid threads T=0");
+    CHECK(fdtd_run(&grid, 10, -3, 8, 8 ) == -1, "Invalid threads T=-3");
+    fdtd_grid_free(&grid);
+
+}
+
+
 int main(){
     test_borders_zero();
     test_symmetry();
     test_reference_8x8();
+    test_determinism();
+    test_uneven_rows();
+    test_invalid_threads();
+
     if(fails == 0){
         printf("\nAll tests passed.");
         return 0;
     }
     printf("\n%d test(s) failed. \n", fails);
-    
+    return 1;
 }
