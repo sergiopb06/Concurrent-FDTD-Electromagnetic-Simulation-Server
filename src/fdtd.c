@@ -100,8 +100,13 @@ void fdtd_update_e(fdtdGrid *g, int row_start, int row_end){
     }
 }
 
-void fdtd_add_source(fdtdGrid *g,int row_source, int column_source, long step){
-    g->Ez[row_source * g->ny + column_source] += fdtd_ricker(step);
+void fdtd_add_source(fdtdGrid *g, int row_source, int column_source, long step){
+    if (g == NULL || g->Ez == NULL) {
+        return;
+    }
+    if (row_source >= 0 && row_source < g->nx && column_source >= 0 && column_source < g->ny) {
+        g->Ez[row_source * g->ny + column_source] += fdtd_ricker(step);
+    }
 }
 
 double fdtd_sum_abs_ez(const fdtdGrid *g){

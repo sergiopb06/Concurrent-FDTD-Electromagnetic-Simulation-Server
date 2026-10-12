@@ -5,7 +5,7 @@ BIN     = bin
 
 all: $(BIN)/fdtd_server $(BIN)/fdtd_client
 
-$(BIN)/fdtd_server: $(BUILD)/fdtd_server.o $(BUILD)/net_util.o | $(BIN)
+$(BIN)/fdtd_server: $(BUILD)/fdtd_server.o $(BUILD)/net_util.o $(BUILD)/protocol.o | $(BIN)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(BIN)/fdtd_client: $(BUILD)/fdtd_client.o $(BUILD)/net_util.o | $(BIN)
