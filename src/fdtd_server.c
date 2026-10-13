@@ -16,6 +16,10 @@
 #define DEFAULT_PORT 8080
 #define LISTEN_BACKLOG 64
 
+#ifndef QUEUE_CAPACITY
+#define QUEUE_CAPACITY 4 //C chairs of barbershop
+#endif
+
 #ifndef MAX_ACTIVE_THREADS
 #define MAX_ACTIVE_THREADS 32 //K handlers active 
 #endif
@@ -88,9 +92,11 @@ static void *handle_connection(void *arg)
 
         } 
         
-        else { 
-            //protocol_parse does its job: NEED TO IMPLEMENT handle_command to reply accordingly to each parse 
-            (void)nu_send_line(conn->file_descriptor, "ERROR not implemented");
+        else { //EXECUTE COMMAND
+            char reply[LINE_MAX_LEN];
+            command_execute(&command, reply, sizeof reply);
+ 
+            (void)nu_send_line(conn->file_descriptor, reply);
         }
 
     }
@@ -143,12 +149,29 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if (job_table_init(QUEUE_CAPACITY) < 0){
+        fprintf(stderr, "could not create the job queue\n");
+        sem_destroy(&g_counting_sem);
+        return EXIT_FAILURE;
+    }
+ 
+
+    if (dispatcher_start() < 0){
+        fprintf(stderr, "could not start the dispatcher\n");
+        job_table_destroy();
+        sem_destroy(&g_counting_sem);
+        return EXIT_FAILURE;
+    }
+
+
     unsigned short port = parse_port(argc, argv);
 
     listen_file_descriptor = nu_listen(port, LISTEN_BACKLOG);
 
     if (listen_file_descriptor < 0)
     {
+        dispatcher_stop();
+        job_table_destroy();
         sem_destroy(&g_counting_sem);
         return EXIT_FAILURE;
     }
@@ -228,6 +251,10 @@ int main(int argc, char **argv)
     for (int i = 0; i < MAX_ACTIVE_THREADS; i++){
         sem_wait_retry(&g_counting_sem);
     }
+
+    dispatcher_stop();
+    job_table_destroy();
+
 
     sem_destroy(&g_counting_sem);
 
