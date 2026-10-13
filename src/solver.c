@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <stdlib.h>
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
 #include "../includes/barrier.h"

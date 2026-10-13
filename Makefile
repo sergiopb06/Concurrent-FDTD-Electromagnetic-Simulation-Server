@@ -8,7 +8,7 @@ ifeq ($(SIN_BARRERA),1)
 endif
 
 OBJS_SYNC = $(BUILD)/barrier.o $(BUILD)/rwlock.o $(BUILD)/bqueue.o $(BUILD)/snapshot.o $(BUILD)/state.o
-OBJS_CORE = $(BUILD)/fdtd.o $(BUILD)/solver.o $(BUILD)/net_util.o $(BUILD)/protocol.o
+OBJS_CORE = $(BUILD)/fdtd.o $(BUILD)/solver.o $(BUILD)/net_util.o $(BUILD)/protocol.o $(BUILD)/job_table.o $(BUILD)/commands.o $(BUILD)/dispatcher.o
 
 all: $(BIN)/fdtd_server $(BIN)/fdtd_client $(BIN)/fdtd_bench
 
