@@ -79,6 +79,12 @@ void command_execute(const command_t *command, char *reply, size_t size){
         else if (command->i >= job.params.nx || command->j >= job.params.ny)
             snprintf(reply, size, "ERROR cell out of grid");
 
+        else if(job.status == JOB_QUEUED)
+            snprintf(reply, size, "ERROR job not started");
+
+        else if(job.status == JOB_ERROR)
+            snprintf(reply, size, "ERROR job failed");
+
         else {
             int step;
             double val;
@@ -98,7 +104,7 @@ void command_execute(const command_t *command, char *reply, size_t size){
                 break;
 
             default:
-                snprintf(reply, size, "ERROR job not running");
+                snprintf(reply, size, "ERROR snapshot not available");
                 break;
             }
 
@@ -124,7 +130,8 @@ void command_execute(const command_t *command, char *reply, size_t size){
 
     //SHUTDOWN
     case C_SHUTDOWN:
-        snprintf(reply, size, "ERROR not implemented"); //needs the orderly shutdown
+        snprintf(reply, size, "BYE"); 
+        server_request_shutdown();
         break;
 
     

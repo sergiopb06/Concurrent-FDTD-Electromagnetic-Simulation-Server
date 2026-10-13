@@ -43,6 +43,11 @@ static void on_sigint(int signum)
     g_running = 0;
 }
 
+void server_request_shutdown(void){
+    g_running = 0;
+    shutdown(listen_file_descriptor, SHUT_RD); //close socket reading
+}
+
 static int install_signal_handlers(void)
 {
     struct sigaction sa;
@@ -207,6 +212,12 @@ int main(int argc, char **argv)
             {
                 continue;
             }
+
+            if(!g_running) //SHUTDOWN requested, leave
+            {
+                break;
+            }
+
             perror("accept");
             break;
         }
