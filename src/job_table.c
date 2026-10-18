@@ -27,8 +27,7 @@ void job_table_stop(void){
     pthread_mutex_lock(&g_jobs_mutex);
     g_stopping = 1;
     pthread_mutex_unlock(&g_jobs_mutex);
-
-    bqueue_stop(&g_queue);//wakes dispatcher
+    bqueue_stop(&g_queue);
 }
 
 void job_table_destroy(void){
@@ -61,7 +60,7 @@ submit_result_t job_submit(const job_params_t *params, unsigned long *id){
         job->status = JOB_QUEUED;
 
 
-        if(bqueue_try_push(&g_queue, (void *)(uintptr_t)job->id) == 0 ){
+        if(bqueue_try_push(&g_queue, (void *)(uintptr_t)job->id) == 0){
             g_job_count++;
             *id = job->id;
             result = SUBMIT_OK;

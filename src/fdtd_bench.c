@@ -9,6 +9,7 @@
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
 #include "../includes/snapshot.h"
+#include "../includes/bqueue.h"
 
 static double get_time_sec(void) {
     struct timespec ts;
