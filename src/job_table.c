@@ -34,6 +34,13 @@ void job_table_destroy(void){
     bqueue_destroy(&g_queue);
 }
 
+
+void job_fail(unsigned long id){
+    pthread_mutex_lock(&g_jobs_mutex);
+    g_jobs[id - 1].status = JOB_ERROR;
+    pthread_mutex_unlock(&g_jobs_mutex);
+}
+
 submit_result_t job_submit(const job_params_t *params, unsigned long *id){
 
     submit_result_t result;

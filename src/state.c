@@ -137,8 +137,8 @@ int published_state_get_peek(published_state_t *ps, unsigned long job_id,
     }
 
     int rc = -1;
-    if (!ps->is_running || ps->job_id != job_id) {
-        rc = -1; /* Job not running */
+    if (ps->job_id != job_id) {
+        rc = -1; /* snapshot belongs to another job (or none) */
     } else if (i < 0 || i >= ps->nx || j < 0 || j >= ps->ny) {
         rc = -2; /* Coordinates out of bounds */
     } else if (ps->snapshot_ez == NULL || ps->snapshot_step < 0) {
