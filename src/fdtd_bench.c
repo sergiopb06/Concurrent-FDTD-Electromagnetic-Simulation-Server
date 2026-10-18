@@ -5,8 +5,10 @@
 #include <time.h>
 #include <errno.h>
 #include <limits.h>
+#include <pthread.h>
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
+#include "../includes/snapshot.h"
 
 static double get_time_sec(void) {
     struct timespec ts;

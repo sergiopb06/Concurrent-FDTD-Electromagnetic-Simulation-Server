@@ -15,12 +15,11 @@ typedef enum{
 //QUEUE
 int job_table_init(size_t queue_capacity);
 
-
 void job_table_stop(void);
-
 
 void job_table_destroy(void);
 
+void job_fail(unsigned long id);
 
 submit_result_t job_submit(const job_params_t *params, unsigned long *id);
 
