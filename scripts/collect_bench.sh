@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/collect_bench.sh - Envoltorio para compatibilidad con bench.sh (CI-0117)
+# scripts/collect_bench.sh - Envoltorio para compatibilidad con bench.sh
 # Redirige la ejecucion a scripts/bench.sh para mediciones locales.
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

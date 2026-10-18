@@ -1,5 +1,5 @@
 ==========================================================================
-   CI-0117 - SUITE DE PRUEBAS DEL SISTEMA Y RECOLECCION DE EVIDENCIA
+   SUITE DE PRUEBAS DEL SISTEMA Y RECOLECCION DE EVIDENCIA
    Fecha y Hora: Sun Oct 18 19:23:36 UTC 2026
    Ambiente:     LOCAL
    Bitacora:     evidencia/make_test_local_20261018_192336.log
@@ -15,7 +15,7 @@ make[1]: Leaving directory '/home/deck/paralela/Concurrent-FDTD-Electromagnetic-
 
 >>> 3. Pruebas unitarias de mecanismos de sincronizacion (Persona A)...
 ===============================================================
-   CI-0117 - PRUEBAS DE MECANISMOS DE SINCRONIZACION (PERSONA A)
+   PRUEBAS DE MECANISMOS DE SINCRONIZACION (PERSONA A)
 ===============================================================
 
 === Barrera: 8 hilos x 100 rondas (Downey 3.7 dos torniquetes) ===

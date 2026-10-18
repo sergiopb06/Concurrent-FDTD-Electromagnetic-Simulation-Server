@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/run_tests.sh - Suite completa de pruebas locales y recoleccion de evidencia (CI-0117)
+# scripts/run_tests.sh - Suite completa de pruebas locales y recoleccion de evidencia
 # Persona A: Mecanismos de sincronizacion, pruebas y recoleccion de evidencia del ambiente.
 
 set -e
@@ -17,7 +17,7 @@ EVIDENCE_FILE="evidencia/ambiente_local.txt"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "=========================================================================="
-echo "   CI-0117 - SUITE DE PRUEBAS DEL SISTEMA Y RECOLECCION DE EVIDENCIA"
+echo "   SUITE DE PRUEBAS DEL SISTEMA Y RECOLECCION DE EVIDENCIA"
 echo "   Fecha y Hora: $(date)"
 echo "   Ambiente:     LOCAL"
 echo "   Bitacora:     $LOG_FILE"

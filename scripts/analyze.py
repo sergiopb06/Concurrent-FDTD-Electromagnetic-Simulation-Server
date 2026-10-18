@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-scripts/analyze.py - Analisis local de rendimiento y Ley de Amdahl (CI-0117)
+scripts/analyze.py - Analisis local de rendimiento y Ley de Amdahl
 
 Procesa mediciones locales de fdtd_bench, calculando:
   - Mediana y dispersion de tiempo de ejecucion (5 repeticiones).

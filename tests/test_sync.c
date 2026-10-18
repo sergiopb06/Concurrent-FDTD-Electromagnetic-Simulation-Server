@@ -829,7 +829,7 @@ static void test_snapshot_writer_thread(void) {
 
 int main(void) {
     printf("===============================================================\n");
-    printf("   CI-0117 - PRUEBAS DE MECANISMOS DE SINCRONIZACION (PERSONA A)\n");
+    printf("   PRUEBAS DE MECANISMOS DE SINCRONIZACION (PERSONA A)\n");
     printf("===============================================================\n");
 
     /* 1. Barrera */
