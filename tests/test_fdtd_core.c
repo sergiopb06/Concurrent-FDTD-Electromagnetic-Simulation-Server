@@ -1,21 +1,21 @@
 #include <stdio.h>
 #include "../includes/fdtd.h"
 #include "../includes/solver.h"
+#include <string.h>
 #include <math.h>
 
 #define REF_N 8     /*Variables used for reference test*/
 #define REF_STEPS 5 
 #define REF_SOURCE 4 
 
-static int fails = 0;
-# The following block of code was partially made using: 
-# Anthropic (2026). Claude(Opus 5.5) https://claude.ai
-# */
+#define DETERMINISM_REPEATS 5
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
+static int fails = 0;
+
+/* 
+The following block of code was partially made using: 
+Anthropic (2026). Claude(Opus 5.5) https://claude.ai
+*/
 
 #define CHECK(condition, message)                                   \
     do {                                                            \
@@ -23,44 +23,9 @@ static int fails = 0;
             printf("PASS: %s\n", message);                          \
         } else {                                                    \
             printf("FAIL: %s (line %d)\n", message, __LINE__);      \
-            exit(1);                                                \
+            fails++;                                                \
         }                                                           \
     } while (0)
-
-#include "../includes/rwlock.h"
-
-static int shared_counter = 0;
-static rwlock_t lock;
-
-static void *safe_worker(void *arg) {
-    (void)arg;
-    for (int i = 0; i < 10000; i++) {
-        rwlock_wrlock(&lock);
-        shared_counter++;
-        rwlock_wrunlock(&lock);
-    }
-    return NULL;
-}
-
-static void test_fixed_race(void) {
-    rwlock_init(&lock);
-    pthread_t th1, th2;
-    pthread_create(&th1, NULL, safe_worker, NULL);
-    pthread_create(&th2, NULL, safe_worker, NULL);
-    pthread_join(th1, NULL);
-    pthread_join(th2, NULL);
-    
-    printf("Resultado con sincronización: %d\n", shared_counter);
-    CHECK(shared_counter == 20000, "La sincronización elimina la condición de carrera");
-    rwlock_destroy(&lock);
-}
-
-int main(void) {
-    test_fixed_race();
-    return 0;
-}
-
-
 
 static void test_borders_zero(void){
     fdtdGrid grid;
@@ -83,7 +48,6 @@ static void test_borders_zero(void){
 }
 
 static void test_symmetry(void){
-
     fdtdGrid grid;
     int bad_axis_m = 0;
     int bad_axis_n = 0;
@@ -95,9 +59,7 @@ static void test_symmetry(void){
     
     int last = grid.nx - 1;
     for(int m = 0; m < grid.nx; m++){
-
         for(int n = 0; n < grid.ny; n++){
-        
             double value = grid.Ez[m * grid.ny + n];
 
             if(value != grid.Ez[(last - m) * grid.ny + n]){
@@ -118,15 +80,14 @@ static void test_symmetry(void){
         }
     }
 
-    CHECK(bad_axis_m == 0, "Symmery of orizontal axis");
+    CHECK(bad_axis_m == 0, "Symmetry of the horizontal axis");
     CHECK(bad_axis_n == 0, "Symmetry of vertical axis");
     CHECK(bad_diagonal == 0, "Symmetry of the main diagonal");
-    CHECK(bad_anti_diagonal == 0, "Symmetry of thee anti-diagonal");
+    CHECK(bad_anti_diagonal == 0, "Symmetry of the anti-diagonal");
     fdtd_grid_free(&grid);
 }
 
 static void reference_8x8(double ez[REF_N][REF_N]){
-
     const double sc = 1.0 / sqrt(2.0);
     const double eta0 = 376.730313668;
     const double eps_r = 1.0;
@@ -141,9 +102,8 @@ static void reference_8x8(double ez[REF_N][REF_N]){
         }
     }
 
-    /*Magnetic field */
     for(int q = 0; q < REF_STEPS; q++){
-
+        /*Magnetic field */
         for(int m = 0; m < REF_N; m++){
             for(int n = 0; n < REF_N - 1; n++){
                 hx[m][n] = hx[m][n] - (sc/eta0) * (ez[m][n+1] - ez[m][n]);
@@ -168,7 +128,6 @@ static void reference_8x8(double ez[REF_N][REF_N]){
         arg = arg * arg; 
         ez[REF_SOURCE][REF_SOURCE] += (1.0 - 2.0 * arg) * exp(-arg);
     }
-
 }
 
 static void test_reference_8x8(void){
@@ -185,7 +144,7 @@ static void test_reference_8x8(void){
     for(int m = 0; m < REF_N; m++){
         for(int n = 0; n <REF_N;n++ ){
             double difference = fabs(grid.Ez[m * grid.ny + n] - expected[m][n]);
-            if(difference  > max_difference){
+            if(difference > max_difference){
                 max_difference = difference;
             }
             if(difference > 1e-12){
@@ -197,17 +156,86 @@ static void test_reference_8x8(void){
     printf(" max difference: %.3e\n", max_difference);
     CHECK(bad_cells == 0, "Reference 8x8 with 5 steps: matches independent implementation");
     fdtd_grid_free(&grid);
-
 }
 
-int main(){
+static int run_simulation(fdtdGrid *grid, int nx, int ny, int steps, int threads, int sx, int sy){
+    if(fdtd_grid_init(grid, nx, ny) != 0){
+        return -1; 
+    }
+    return fdtd_run(grid, steps, threads, sx, sy);
+}
+
+static int matches_reference(const fdtdGrid *reference, int threads, int steps, int sx, int sy){
+    int mismatches = 0;
+
+    for(int repeat = 0; repeat < DETERMINISM_REPEATS; repeat++){
+        fdtdGrid grid; 
+        run_simulation(&grid, reference->nx, reference->ny, steps, threads, sx, sy);
+
+        size_t bytes = sizeof(double) * (size_t)reference->nx * (size_t)reference->ny;
+        if(memcmp(grid.Ez, reference->Ez, bytes) != 0){
+            mismatches++;
+        }
+
+        fdtd_grid_free(&grid);
+    }
+    return mismatches == 0;
+}
+
+static void test_determinism(void){
+    const int thread_counts[] = {1, 2, 3, 4, 8};
+    const int cases = sizeof(thread_counts) / sizeof(thread_counts[0]);
+    fdtdGrid reference; 
+    char message[96];
+
+    run_simulation(&reference, 101, 101, 200, 1, 50, 50);
+
+    for(int c = 0; c < cases; c++){
+        int threads = thread_counts[c];
+        snprintf(message, sizeof(message), "Determinism: T=%d is identical to T=1 (memcmp)", threads);
+        CHECK(matches_reference(&reference, threads, 200, 50, 50), message);
+    }
+
+    fdtd_grid_free(&reference);
+}
+
+static void test_uneven_rows(void){
+    const int thread_counts[] = {3, 5, 7, 8, 35};
+    const int cases = sizeof(thread_counts) / sizeof(thread_counts[0]);
+    fdtdGrid reference; 
+    char message[96];
+
+    run_simulation(&reference, 37, 29, 120, 1, 18, 14);
+
+    for(int c = 0; c < cases; c++){
+        int threads = thread_counts[c];
+        snprintf(message, sizeof(message), "Uneven rows T=%d", threads);
+        CHECK(matches_reference(&reference, threads, 120, 18, 14), message);
+    }
+    fdtd_grid_free(&reference);
+}
+
+static void test_invalid_threads(void){
+    fdtdGrid grid;
+
+    fdtd_grid_init(&grid, 16, 16);
+    CHECK(fdtd_run(&grid, 10, 0, 8, 8 ) == -1, "Invalid threads T=0");
+    CHECK(fdtd_run(&grid, 10, -3, 8, 8 ) == -1, "Invalid threads T=-3");
+    fdtd_grid_free(&grid);
+}
+
+int main(void){
     test_borders_zero();
     test_symmetry();
     test_reference_8x8();
+    test_determinism();
+    test_uneven_rows();
+    test_invalid_threads();
+
     if(fails == 0){
-        printf("\nAll tests passed.");
+        printf("\nAll tests passed.\n");
         return 0;
     }
-    printf("\n%d test(s) failed. \n", fails);
-    
+    printf("\n%d test(s) failed.\n", fails);
+    return 1;
 }

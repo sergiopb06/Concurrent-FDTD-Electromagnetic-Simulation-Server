@@ -11,7 +11,6 @@
  */
 
 static int shared_counter = 0;
-static int violations = 0;
 
 static void *race_worker(void *arg) {
     (void)arg;
