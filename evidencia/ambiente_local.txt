@@ -1,10 +1,10 @@
 ==========================================================================
 EVIDENCIA DE AMBIENTE LOCAL
-Fecha: Sun Oct 18 19:28:27 UTC 2026
+Fecha: Sun Oct 18 19:30:21 UTC 2026
 ==========================================================================
 
 --- UNAME ---
-Linux 2e7b69f5012a 6.18.50-valve2-1-neptune-618-gc7289a96b14d #1 SMP PREEMPT_DYNAMIC Tue, 22 Sep 2026 20:17:17 +0000 x86_64 GNU/Linux
+Linux 61fcee460af2 6.18.50-valve2-1-neptune-618-gc7289a96b14d #1 SMP PREEMPT_DYNAMIC Tue, 22 Sep 2026 20:17:17 +0000 x86_64 GNU/Linux
 
 --- DISTRO / SO ---
 PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
@@ -34,7 +34,7 @@ Core(s) per socket:                      4
 Socket(s):                               1
 Stepping:                                1
 Frequency boost:                         enabled
-CPU(s) scaling MHz:                      99%
+CPU(s) scaling MHz:                      77%
 CPU max MHz:                             4369.8779
 CPU min MHz:                             421.1930
 BogoMIPS:                                5988.99
@@ -68,7 +68,7 @@ Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspa
 
 --- MEMORIA (free -h) ---
                total        used        free      shared  buff/cache   available
-Mem:            14Gi       5.4Gi       2.4Gi       262Mi       7.7Gi       9.5Gi
+Mem:            14Gi       5.3Gi       2.5Gi       258Mi       7.7Gi       9.6Gi
 Swap:          8.5Gi          0B       8.5Gi
 
 --- COMPILADOR ---
