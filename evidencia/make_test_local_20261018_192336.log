@@ -1,0 +1,213 @@
+==========================================================================
+   CI-0117 - SUITE DE PRUEBAS DEL SISTEMA Y RECOLECCION DE EVIDENCIA
+   Fecha y Hora: Sun Oct 18 19:23:36 UTC 2026
+   Ambiente:     LOCAL
+   Bitacora:     evidencia/make_test_local_20261018_192336.log
+==========================================================================
+
+>>> 1. Recolectando evidencia del ambiente local...
+  [OK] Evidencia de hardware y software guardada en: evidencia/ambiente_local.txt
+
+>>> 2. Verificando y compilando binarios...
+make[1]: Entering directory '/home/deck/paralela/Concurrent-FDTD-Electromagnetic-Simulation-Server'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/deck/paralela/Concurrent-FDTD-Electromagnetic-Simulation-Server'
+
+>>> 3. Pruebas unitarias de mecanismos de sincronizacion (Persona A)...
+===============================================================
+   CI-0117 - PRUEBAS DE MECANISMOS DE SINCRONIZACION (PERSONA A)
+===============================================================
+
+=== Barrera: 8 hilos x 100 rondas (Downey 3.7 dos torniquetes) ===
+  [[32mPASS[0m] barrier_init retorna 0
+  [[32mPASS[0m] Ningun hilo entro a la ronda r+1 antes de que todos completaran la r
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] Todos los hilos llegaron exactamente a la ultima ronda
+  [[32mPASS[0m] barrier_destroy retorna 0
+
+=== Barrera: Asimetria de velocidad (fast vs slow threads) ===
+  [[32mPASS[0m] Dos torniquetes impiden que hilos rapidos adelanten a hilos lentos rezagados
+
+=== Barrera: Estres con alta concurrencia (32 hilos) ===
+  [[32mPASS[0m] Barrera estable bajo carga pesada de 32 hilos
+
+=== Barrera: Caso degenerado de 1 hilo ===
+  [[32mPASS[0m] barrier_init(count=1)
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_wait avanza inmediatamente con 1 hilo
+  [[32mPASS[0m] barrier_destroy con 1 hilo
+
+=== L-E: Lectores simultaneos concurrentes ===
+  [[32mPASS[0m] Varios lectores leen simultaneamente en seccion critica
+  [[32mPASS[0m] Cero violaciones durante lectura concurrente
+    (Maximo de lectores concurrentes observado: 10 de 10)
+
+=== L-E: Exclusion mutua estricta de escritor ===
+  [[32mPASS[0m] Exclusion mutua perfecta: nunca hay escritor con lectores ni dos escritores
+
+=== L-E: No inanicion del escritor (Downey 4.2.6) ===
+  [[32mPASS[0m] Escritor solicita wrlock durante bombardeo de lectores
+    (Tiempo de espera del escritor: 0.0003 s con flujo continuo)
+  [[32mPASS[0m] El escritor entra oportunamente (< 1.0s); no sufre inanicion
+    (Total de lecturas realizadas durante la prueba: 464)
+  [[32mPASS[0m] Flujo masivo de lectores verificado
+
+=== L-E: Integracion con estado publicado (STATUS y PEEK) ===
+  [[32mPASS[0m] published_state_init
+  [[32mPASS[0m] start_job 101
+  [[32mPASS[0m] publish_snapshot paso 20
+  [[32mPASS[0m] get_status trabajo 101
+  [[32mPASS[0m] Valores de step y total correctos
+  [[32mPASS[0m] get_peek celda (2,3)
+  [[32mPASS[0m] peek reporta step 20
+  [[32mPASS[0m] peek entrega el valor exacto de la celda
+  [[32mPASS[0m] peek fuera de limites reporta -2
+  [[32mPASS[0m] status trabajo desconocido reporta -1
+  [[32mPASS[0m] finish_job
+
+=== Cola: Llenar, vaciar y orden FIFO estricto ===
+  [[32mPASS[0m] bqueue_init(capacity=8)
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_push dentro de capacidad
+  [[32mPASS[0m] bqueue_size igual a capacidad maxima
+  [[32mPASS[0m] Todos los elementos salieron en riguroso orden FIFO
+  [[32mPASS[0m] bqueue_size es 0 tras vaciar
+
+=== Cola: Semantica BUSY al exceder C con bqueue_try_push ===
+  [[32mPASS[0m] try_push silla disponible
+  [[32mPASS[0m] try_push silla disponible
+  [[32mPASS[0m] try_push silla disponible
+  [[32mPASS[0m] try_push silla disponible
+  [[32mPASS[0m] try_push rechaza con -1 cuando la cola esta llena (BUSY)
+  [[32mPASS[0m] Tamaño de cola se mantiene en 4
+  [[32mPASS[0m] Primer cliente atendido
+  [[32mPASS[0m] try_push acepta tras liberarse un espacio
+
+=== Cola: Insercion bloqueante del productor (bqueue_push) ===
+  [[32mPASS[0m] Productor se bloquea al intentar bqueue_push en cola llena
+  [[32mPASS[0m] Consumidor extrae primer elemento
+  [[32mPASS[0m] Productor se desbloquea exitosamente al haber espacio
+
+=== Cola: Concurrencia masiva M:N (4 productores, 4 consumidores) ===
+  [[32mPASS[0m] Todos los 1000 items fueron consumidos sin perdida ni duplicacion
+  [[32mPASS[0m] Suma de control exacta de todos los datos recibidos
+
+=== Cola: Apagado limpio y despertar de hilos (bqueue_stop) ===
+  [[32mPASS[0m] bqueue_stop ejecutado
+  [[32mPASS[0m] Hilo en espera fue despertado limpiamente y retorno -1
+  [[32mPASS[0m] Hilo en espera fue despertado limpiamente y retorno -1
+  [[32mPASS[0m] Hilo en espera fue despertado limpiamente y retorno -1
+
+=== Snapshot: Verificacion de formato de archivo binario ===
+  [[32mPASS[0m] snapshot_create crea estructura correctamente
+  [[32mPASS[0m] snapshot_write_file guarda a disco
+  [[32mPASS[0m] Archivo binario job12345_step42.bin existe en disco
+  [[32mPASS[0m] Cabecera contiene 3 enteros uint32_t
+  [[32mPASS[0m] Cabecera nx coincide (4)
+  [[32mPASS[0m] Cabecera ny coincide (5)
+  [[32mPASS[0m] Cabecera step coincide (42)
+  [[32mPASS[0m] Se leyeron exactamente nx*ny doubles
+  [[32mPASS[0m] Datos en archivo coinciden bit a bit con memoria
+  [[32mPASS[0m] Fin de archivo exacto (sin bytes residuales)
+
+=== Snapshot: Hilo escritor consumiendo de la cola acotada ===
+  [[32mPASS[0m] Hilo escritor lanzado
+  [[32mPASS[0m] Todos los archivos de instantaneas fueron escritos por el hilo consumidor
+
+===============================================================
+RESUMEN DE PRUEBAS DE SINCRONIZACION:
+  Total de aserciones: 93
+  Exitosas:            [32m93[0m
+  Fallidas:            [31m0[0m
+===============================================================
+  [\033[32mPASS\033[0m] Suite 'Mecanismos de Sincronizacion (test_sync)' superada exitosamente.
+
+>>> 4. Prueba de demostracion de condicion de carrera...
+=== PRUEBA: Condición de carrera (sin sincronización) ===
+Resultado esperado: 20000
+Resultado obtenido: 10000
+  [[32mPASS[0m] Condición de carrera detectada correctamente.
+  [\033[32mPASS\033[0m] Suite 'Condicion de Carrera (test_race)' superada exitosamente.
+
+>>> 5. Pruebas del nucleo FDTD (simetria, bordes, referencia, determinismo)...
+PASS: PEC borders: Ez is zero on the whole boundary
+PASS: Symmetry of the horizontal axis
+PASS: Symmetry of vertical axis
+PASS: Symmetry of the main diagonal
+PASS: Symmetry of the anti-diagonal
+ max difference: 4.337e-19
+PASS: Reference 8x8 with 5 steps: matches independent implementation
+PASS: Determinism: T=1 is identical to T=1 (memcmp)
+PASS: Determinism: T=2 is identical to T=1 (memcmp)
+PASS: Determinism: T=3 is identical to T=1 (memcmp)
+PASS: Determinism: T=4 is identical to T=1 (memcmp)
+PASS: Determinism: T=8 is identical to T=1 (memcmp)
+PASS: Uneven rows T=3
+PASS: Uneven rows T=5
+PASS: Uneven rows T=7
+PASS: Uneven rows T=8
+PASS: Uneven rows T=35
+PASS: Invalid threads T=0
+PASS: Invalid threads T=-3
+
+All tests passed.
+  [\033[32mPASS\033[0m] Suite 'Nucleo FDTD (test_fdtd_core)' superada exitosamente.
+
+>>> 6. Demostracion de no determinismo / carrera con -DSIN_BARRERA...
+  Ejecutando nucleo FDTD sin barreras...
+  [\033[32mPASS\033[0m] Condicion de carrera con -DSIN_BARRERA detectada correctamente (las barreras son necesarias).
+
+>>> 7. Pruebas de integracion cliente-servidor...
+  [Test 7.1] Flujo completo: SUBMIT -> STATUS -> PEEK -> RESULT...
+    SUBMIT respuesta: OK 1
+    STATUS respuesta: DONE 2.000
+    PEEK respuesta:   ERROR no snapshot yet
+    RESULT respuesta: RESULT 0.0000000000e+00 FILE
+  [Test 7.2] Validacion de solicitudes invalidas y mal formadas...
+    Rechazo nx negativo:       ERROR nx out of range
+    Rechazo comando invalido:  ERROR unknown command
+    Rechazo ID no numerico:    ERROR invalid id
+  [Test 7.3] Concurrencia y cola acotada...
+    Peticiones concurrentes procesadas sin caida del servidor.
+  [Test 7.4] Apagado ordenado...
+    Servidor finalizado limpiamente.
+  [\033[32mPASS\033[0m] Suite 'Integracion y Estres Cliente-Servidor' superada exitosamente.
+
+==========================================================================
+RESUMEN DE PRUEBAS DEL PROYECTO:
+  Suites ejecutadas: 4
+  Suites exitosas:   \033[32m4\033[0m
+  Suites fallidas:   0
+  Evidencia guardada en: evidencia/make_test_local_20261018_192336.log
+==========================================================================
+TODAS LAS PRUEBAS PASARON EXITOSAMENTE.
