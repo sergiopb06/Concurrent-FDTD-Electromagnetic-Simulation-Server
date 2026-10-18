@@ -8,11 +8,14 @@
 #define REF_SOURCE 4 
 
 static int fails = 0;
-/* 
-The following block of code was partially made using: 
-Anthropic (2026). Claude(Opus 5.5) https://claude.ai
-*/
+# The following block of code was partially made using: 
+# Anthropic (2026). Claude(Opus 5.5) https://claude.ai
+# */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #define CHECK(condition, message)                                   \
     do {                                                            \
@@ -20,9 +23,42 @@ Anthropic (2026). Claude(Opus 5.5) https://claude.ai
             printf("PASS: %s\n", message);                          \
         } else {                                                    \
             printf("FAIL: %s (line %d)\n", message, __LINE__);      \
-            fails++;                                             \
+            exit(1);                                                \
         }                                                           \
     } while (0)
+
+#include "../includes/rwlock.h"
+
+static int shared_counter = 0;
+static rwlock_t lock;
+
+static void *safe_worker(void *arg) {
+    (void)arg;
+    for (int i = 0; i < 10000; i++) {
+        rwlock_wrlock(&lock);
+        shared_counter++;
+        rwlock_wrunlock(&lock);
+    }
+    return NULL;
+}
+
+static void test_fixed_race(void) {
+    rwlock_init(&lock);
+    pthread_t th1, th2;
+    pthread_create(&th1, NULL, safe_worker, NULL);
+    pthread_create(&th2, NULL, safe_worker, NULL);
+    pthread_join(th1, NULL);
+    pthread_join(th2, NULL);
+    
+    printf("Resultado con sincronización: %d\n", shared_counter);
+    CHECK(shared_counter == 20000, "La sincronización elimina la condición de carrera");
+    rwlock_destroy(&lock);
+}
+
+int main(void) {
+    test_fixed_race();
+    return 0;
+}
 
 
 
@@ -109,7 +145,7 @@ static void reference_8x8(double ez[REF_N][REF_N]){
     for(int q = 0; q < REF_STEPS; q++){
 
         for(int m = 0; m < REF_N; m++){
-            for(int n = 0; n < REF_N; n++){
+            for(int n = 0; n < REF_N - 1; n++){
                 hx[m][n] = hx[m][n] - (sc/eta0) * (ez[m][n+1] - ez[m][n]);
             }
         }
