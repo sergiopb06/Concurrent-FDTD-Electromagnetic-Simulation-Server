@@ -30,7 +30,7 @@ Terminal 2, el cliente. El host debe conectar a 120.0.0.1:
 
 bash
 C=/ruta/al/repo/bin/fdtd_client
-
+```bash
 #--------n de filas y columnas, pasos, hilos, k pasos para guardar, ubicacion de inicio de simulacion  
 $C 127.0.0.1 8080 SUBMIT 1024 1024 3000 4 100 512 512   # OK <id>, BUSY o ERROR
 $C 127.0.0.1 8080 STATUS 1                              # RUNNING 
